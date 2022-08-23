@@ -3,7 +3,6 @@ const { errorMessage } = require('../../utils');
 
 exports.getCards = (req, res) => {
   Card.find({})
-    .orFail()
     .then((card) => res.send({ data: card }))
     .catch((err) => errorMessage(err, req, res));
 };
@@ -11,7 +10,6 @@ exports.getCards = (req, res) => {
 exports.createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    // .orFail()
     .then((card) => res.send({ data: card }))
     .catch((err) => errorMessage(err, req, res));
 };
