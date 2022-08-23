@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path');
+
+// const path = require('path');
+
 const { routes } = require('./src/routes/index');
 
 const { PORT = 3000 } = process.env;
@@ -18,12 +20,12 @@ async function main() {
 
 main();
 
-const PUBLIC_FOLDER = path.join(__dirname, 'public');
-
-app.use(express.static(PUBLIC_FOLDER));
+// const PUBLIC_FOLDER = path.join(__dirname, 'public');
+// app.use(express.static(PUBLIC_FOLDER));
 
 app.use(express.json());
 
+// логирование методов запроса
 app.use((req, res, next) => {
   console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)}`);
   next();

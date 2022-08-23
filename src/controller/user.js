@@ -1,28 +1,39 @@
 const { User } = require('../models/user');
+const { errorMessage } = require('../../utils');
 
-exports.getUsers = async (req, res) => {
-  const users = await User.find({});
-  res.send(users);
+exports.getUsers = (req, res) => {
+  User.find({})
+    .then((user) => res.send({ data: user }))
+    .catch((err) => errorMessage(err, req, res));
 };
 
-exports.getUserbyId = async (req, res) => {
-  const user = await User.findById(req.params.id);
-  res.send(user);
+exports.getUserbyId = (req, res) => {
+  User.findById(req.params.id)
+    .orFail()
+    .then((user) => res.send({ data: user }))
+    .catch((err) => errorMessage(err, req, res));
 };
 
-exports.createUser = async (req, res) => {
-  const user = await User.create(req.body);
-  res.send(user);
+exports.createUser = (req, res) => {
+  const { name, about, avatar } = req.body;
+  User.create({ name, about, avatar })
+    // .orFail()
+    .then((user) => res.send({ data: user }))
+    .catch((err) => errorMessage(err, req, res));
 };
 
-exports.updateUser = async (req, res) => {
+exports.updateUser = (req, res) => {
   const { name, about } = req.body;
-  const user = await User.findByIdAndUpdate(req.user._id, { name, about });
-  res.send(user);
+  User.findByIdAndUpdate(req.user._id, { name, about })
+    .orFail()
+    .then((user) => res.send({ data: user }))
+    .catch((err) => errorMessage(err, req, res));
 };
 
-exports.updateUserAvatar = async (req, res) => {
+exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  const user = await User.findByIdAndUpdate(req.user._id, { avatar });
-  res.send(user);
+  User.findByIdAndUpdate(req.user._id, { avatar })
+    .orFail()
+    .then((user) => res.send({ data: user }))
+    .catch((err) => errorMessage(err, req, res));
 };
