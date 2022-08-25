@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
-// const path = require('path');
+const userControllers = require('./src/controller/user');
+const auth = require('./src/middlewares/auth');
 
 const { routes } = require('./src/routes/index');
 
@@ -20,23 +21,17 @@ async function main() {
 
 main();
 
-// const PUBLIC_FOLDER = path.join(__dirname, 'public');
-// app.use(express.static(PUBLIC_FOLDER));
-
 app.use(express.json());
+
+app.post('/signin', userControllers.login);
+app.post('/signup', userControllers.createUser);
 
 // логирование методов запроса
 app.use((req, res, next) => {
-  console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)}`);
+  console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)} ${JSON.stringify(req.user)}`);
   next();
 });
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '62f8f8921c88e1d945c4f58d',
-  };
-
-  next();
-});
+app.use(auth);
 
 app.use(routes);
