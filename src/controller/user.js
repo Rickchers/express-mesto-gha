@@ -1,26 +1,46 @@
 const bcrypt = require('bcryptjs');
+
 const jwt = require('jsonwebtoken');
-// const validator = require('validator');
+
+const NotFoundError = require('../errors/not-found-err');
+const ConflictRequest = require('../errors/conflicting-request');
+
 const { User } = require('../models/user');
 const { errorMessage } = require('../../utils');
 
-exports.getUsers = (req, res) => {
+exports.getUsers = (req, res, next) => {
   User.find({})
     .then((user) => res.send({ data: user }))
-    .catch((err) => errorMessage(err, req, res));
+    .catch(next);
 };
 
-exports.getUserbyId = (req, res) => {
+exports.getUserbyId = (req, res, next) => {
   User.findById(req.params.id)
-    .orFail()
-    .then((user) => res.send({ data: user }))
-    .catch((err) => errorMessage(err, req, res));
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Нет пользователя с таким id');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
 };
 
-exports.createUser = (req, res) => {
+exports.getUserProfile = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
+};
+
+exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name,
@@ -30,7 +50,12 @@ exports.createUser = (req, res) => {
       password: hash,
     }))
     .then((user) => res.send({ data: user }))
-    .catch((err) => errorMessage(err, req, res));
+    .catch((err) => {
+      if (err.code === 11000) {
+        throw new ConflictRequest('Пользователь с таким email уже существует');
+      }
+    })
+    .catch(next);
 };
 
 exports.updateUser = (req, res) => {
@@ -57,7 +82,7 @@ exports.updateUserAvatar = (req, res) => {
     .catch((err) => errorMessage(err, req, res));
 };
 
-exports.login = (req, res) => {
+exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -70,10 +95,9 @@ exports.login = (req, res) => {
       );
       res.send({ token });
     })
-    .catch((err) => {
+    .catch(() => {
       // ошибка аутентификации
-      res
-        .status(401)
-        .send({ message: err.message });
-    });
+      throw new NotFoundError('Неправильные почта или пароль');
+    })
+    .catch(next);
 };

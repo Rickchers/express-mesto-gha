@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const { celebrate, Joi, errors } = require('celebrate');
+
 const userControllers = require('./src/controller/user');
 const auth = require('./src/middlewares/auth');
 
@@ -23,15 +25,42 @@ main();
 
 app.use(express.json());
 
-app.post('/signin', userControllers.login);
-app.post('/signup', userControllers.createUser);
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }).unknown(true),
+}), userControllers.login);
+
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), userControllers.createUser);
 
 // логирование методов запроса
+/*
 app.use((req, res, next) => {
-  console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)} ${JSON.stringify(req.user)}`);
+  console.log(`
+    ${req.method}: ${req.path}
+    ${JSON.stringify(req.body)}
+    ${JSON.stringify(req.user._id)}
+  `);
   next();
 });
-
+*/
 app.use(auth);
 
 app.use(routes);
+
+// здесь обрабатываем все ошибки
+
+app.use(errors()); // обработчик ошибок celebrate
+
+app.use((err, req, res, next) => {
+  res.status(err.statusCode).send({ message: err.message });
+}); // централизованный обработчик
