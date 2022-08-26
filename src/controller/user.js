@@ -22,6 +22,13 @@ exports.getUserbyId = (req, res, next) => {
       }
       res.send({ data: user });
     })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res
+          .status(401)
+          .send({ message: 'Неправильный id' });
+      }
+    })
     .catch(next);
 };
 
