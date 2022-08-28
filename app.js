@@ -1,10 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const validator = require('validator');
+
 const { celebrate, Joi, errors } = require('celebrate');
 
 const userControllers = require('./src/controller/user');
 const auth = require('./src/middlewares/auth');
+const { errorHandler } = require('./utils');
 
 const { routes } = require('./src/routes/index');
 
@@ -32,11 +35,20 @@ app.post('/signin', celebrate({
   }).unknown(true),
 }), userControllers.login);
 
+const method = (value) => {
+  const result = validator.isURL(value);
+  if (result) {
+    return value;
+  }
+  throw new Error('URL validation error');
+};
+
+// регистрация нового пользователя
 app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().custom(method),
     email: Joi.string().required().email(),
     password: Joi.string().required(),
   }),
@@ -61,6 +73,4 @@ app.use(routes);
 
 app.use(errors()); // обработчик ошибок celebrate
 
-app.use((err, req, res) => {
-  res.status(err.statusCode).send({ message: err.message });
-}); // централизованный обработчик
+app.use(errorHandler); // централизованный обработчик

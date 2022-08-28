@@ -4,13 +4,19 @@ const jwt = require('jsonwebtoken');
 
 const NotFoundError = require('../errors/not-found-err');
 const ConflictRequest = require('../errors/conflicting-request');
+const Badrequest = require('../errors/badrequest');
 
 const { User } = require('../models/user');
-const { errorMessage } = require('../../utils');
 
 exports.getUsers = (req, res, next) => {
-  User.find({})
-    .then((user) => res.send({ data: user }))
+  User
+    .find({})
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователи не найдены');
+      }
+      res.send({ data: user });
+    })
     .catch(next);
 };
 
@@ -65,7 +71,7 @@ exports.createUser = (req, res, next) => {
     .catch(next);
 };
 
-exports.updateUser = (req, res) => {
+exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -74,10 +80,15 @@ exports.updateUser = (req, res) => {
   )
     .orFail()
     .then((user) => res.send({ data: user }))
-    .catch((err) => errorMessage(err, req, res));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        throw new Badrequest('Переданы некорректные данные');
+      }
+    })
+    .catch(next);
 };
 
-exports.updateUserAvatar = (req, res) => {
+exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -85,8 +96,12 @@ exports.updateUserAvatar = (req, res) => {
     { new: true, runValidators: true },
   )
     .orFail()
-    .then((user) => res.send({ data: user }))
-    .catch((err) => errorMessage(err, req, res));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        throw new Badrequest('Переданы некорректные данные');
+      }
+    })
+    .catch(next);
 };
 
 exports.login = (req, res, next) => {
