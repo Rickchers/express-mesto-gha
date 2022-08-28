@@ -68,7 +68,7 @@ exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        throw new ConflictRequest('Пользователь с таким email уже существует');
+        throw new ConflictRequest('Неправильные почта или пароль');
       }
     })
     .catch(next);
