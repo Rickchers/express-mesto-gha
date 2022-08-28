@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const NotFoundError = require('../errors/not-found-err');
 const ConflictRequest = require('../errors/conflicting-request');
 const Badrequest = require('../errors/badrequest');
+const Unauthorized = require('../errors/unauthorized');
 
 const { User } = require('../models/user');
 
@@ -30,9 +31,7 @@ exports.getUserbyId = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res
-          .status(401)
-          .send({ message: 'Неправильный id' });
+        throw new NotFoundError('Нет пользователя с таким id');
       }
     })
     .catch(next);
@@ -62,7 +61,11 @@ exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.send({ data: user }))
+    .then((user) => {
+      const newUser = user.toObject();
+      delete newUser.password;
+      res.send(newUser);
+    })
     .catch((err) => {
       if (err.code === 11000) {
         throw new ConflictRequest('Пользователь с таким email уже существует');
@@ -119,7 +122,7 @@ exports.login = (req, res, next) => {
     })
     .catch(() => {
       // ошибка аутентификации
-      throw new NotFoundError('Неправильные почта или пароль');
+      throw new Unauthorized('Неправильные почта или пароль');
     })
     .catch(next);
 };
