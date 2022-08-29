@@ -38,6 +38,8 @@ exports.getUserbyId = (req, res, next) => {
 };
 
 exports.getUserProfile = (req, res, next) => {
+  console.log(req.user._id);
+
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
@@ -93,12 +95,14 @@ exports.updateUser = (req, res, next) => {
 
 exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
+
   User.findByIdAndUpdate(
     req.user._id,
     { avatar },
     { new: true, runValidators: true },
   )
     .orFail()
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new Badrequest('Переданы некорректные данные');

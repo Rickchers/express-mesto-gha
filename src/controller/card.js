@@ -5,6 +5,7 @@ const Forbidden = require('../errors/forbidden');
 const Badrequest = require('../errors/badrequest');
 
 exports.getCards = (req, res, next) => {
+  // console.log(req.user);
   Card
     .find({})
     .then((card) => {
